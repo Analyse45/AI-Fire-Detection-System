@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+venv/
+finv/
+
+screenshots/
+fire_logs.csv
+
+.DS_Store
+Thumbs.db
