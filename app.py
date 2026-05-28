@@ -9,8 +9,17 @@ import datetime
 import time
 import csv
 import pygame
+from dotenv import load_dotenv
+import torch
 
-# Page configuration
+# Load environment variables
+
+load_dotenv()
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+
+# page configuration
 
 st.set_page_config(
     page_title="AI Fire Detection Dashboard",
@@ -18,10 +27,25 @@ st.set_page_config(
     layout="wide"
 )
 
-# Telegram
+# Page title
 
-BOT_TOKEN = "8901728129:AAHm41XTr-klQ7iS_YqoZUQPWaLSC55_z7c"
-CHAT_ID = "794630841"
+st.title("MY AI Fire Detection Dashboard")
+
+st.markdown("---")
+
+# GPU Check
+
+st.sidebar.header(" System Information")
+
+if torch.cuda.is_available():
+
+    st.sidebar.success("GPU Active ")
+
+    st.sidebar.write(torch.cuda.get_device_name(0))
+
+else:
+
+    st.sidebar.error("Running on CPU NOT GPU")
 
 # Load AI Model
 
@@ -53,15 +77,9 @@ if not os.path.exists(log_file):
             "Screenshot"
         ])
 
-# Title and description
+# Access webcam
 
-st.title("🔥 AI Fire Detection Dashboard")
-
-st.markdown("---")
-
-# Live Camera Feed
-
-st.subheader("📹 Live AI Surveillance Feed")
+st.subheader("MY Live AI Surveillance Feed")
 
 run = st.checkbox("Start Camera")
 
@@ -69,9 +87,16 @@ FRAME_WINDOW = st.image([])
 
 camera = cv2.VideoCapture(0)
 
+# Alert cooldown mechanism
+
 last_alert_time = 0
 cooldown_seconds = 15
+
+# Frame counter for performance optimization
+
 frame_count = 0
+
+# Main loop
 
 while run:
 
@@ -79,26 +104,29 @@ while run:
 
     if not success:
 
-        st.error("Failed to access webcam")
+        st.error(" Failed to access webcam")
         break
 
     frame_count += 1
 
-    # Skip alternate frames AFTER reading frame
+    # Skip alternate frames for performance
+
     if frame_count % 2 != 0:
         continue
 
     # Resize frame for faster inference
+
     frame = cv2.resize(frame, (640, 360))
 
-
-    # Yolo Inference
+    # YOLOv8 inference
 
     results = model(frame, device=0)
 
     annotated_frame = results[0].plot()
 
     boxes = results[0].boxes
+
+    # Check for detections and handle alerts
 
     if boxes is not None and len(boxes) > 0:
 
@@ -110,17 +138,31 @@ while run:
 
                 confidence = float(box.conf[0])
 
+                # Confidence threshold
+
                 if confidence > 0.55:
 
-                    print("Fire Deteted with confidence:", confidence)
+                    print(f"YESS! FIRE DETECTED | Confidence: {confidence:.2f}")
 
-                   # Play alarm sound
+                    # Play alarm sound
 
-                    alarm_sound.play()
+                    try:
+
+                        alarm_sound.play()
+
+                    except Exception as e:
+
+                        print("Alarm Error:", e)
+
+                    # -----------------------------------
+                    # TIMESTAMP
+                    # -----------------------------------
 
                     timestamp = datetime.datetime.now().strftime(
                         "%Y-%m-%d_%H-%M-%S"
                     )
+
+                    # Save screenshot
 
                     screenshot_path = f"screenshots/fire_{timestamp}.jpg"
 
@@ -129,7 +171,7 @@ while run:
                         frame
                     )
 
-                    # Save log to CSV
+                    # Log detection to CSV
 
                     with open(log_file, mode='a', newline='') as file:
 
@@ -141,9 +183,9 @@ while run:
                             screenshot_path
                         ])
 
-                    # Telegram Alert
+                    # Send Telegram alert
 
-                    message = f'''
+                    message = f"""
 🔥 FIRE DETECTED!
 
 ⏰ Time: {timestamp}
@@ -151,7 +193,7 @@ while run:
 🎯 Confidence: {confidence:.2f}
 
 ⚠ Emergency Attention Required
-'''
+"""
 
                     telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
@@ -175,36 +217,55 @@ while run:
 
                         st.error(f"Telegram Error: {e}")
 
+                    # -----------------------------------
+                    # UPDATE COOLDOWN TIMER
+                    # -----------------------------------
+
                     last_alert_time = current_time
 
-    # Display the annotated frame
+    # -----------------------------------
+    # DISPLAY FRAME
+    # -----------------------------------
 
     annotated_frame = cv2.cvtColor(
         annotated_frame,
         cv2.COLOR_BGR2RGB
     )
 
-    FRAME_WINDOW.image(annotated_frame)
+    FRAME_WINDOW.image(
+        annotated_frame,
+        channels="RGB",
+        width="stretch"
+    )
+
+# Exit on 'Q' key press
 
 camera.release()
 
+# -----------------------------------
+# SYSTEM STATUS
+# -----------------------------------
+
 st.markdown("---")
 
-# System Status
-
-st.subheader("🚨 System Status")
+st.subheader("MY System Status")
 
 st.success("AI Fire Detection System Running")
 
-# Logs
+# -----------------------------------
+# SHOW LOGS
+# -----------------------------------
 
 if os.path.exists(log_file):
 
     df = pd.read_csv(log_file)
 
-    st.subheader("📋 Detection Logs")
+    st.subheader(" Detection Logs")
 
-    st.dataframe(df)
+    st.dataframe(
+        df,
+        width="stretch"
+    )
 
     st.subheader("🔥 Total Fire Detections")
 

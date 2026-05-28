@@ -11,3 +11,6 @@ fire_logs.csv
 
 .DS_Store
 Thumbs.db
+
+# Ignore .env file containing sensitive information
+.env
