@@ -34,7 +34,7 @@ The system continuously monitors live webcam feeds, detects fire in real time, t
 
 ---
 
-# 🏗 System Architecture
+#  System Architecture
 
 ```text
 Webcam Feed
@@ -110,7 +110,7 @@ pip install -r requirements.txt
 
 ---
 
-# ▶ Run Application
+#  Run Application
 
 ---bash
 streamlit run app.py
@@ -120,7 +120,8 @@ streamlit run app.py
 
 #  Screenshots
 
-(Add your screenshots here after uploading to GitHub)
+Dashboard Image
+assests/fire_detect(Dashboard).png
 
 
 
@@ -134,6 +135,10 @@ streamlit run app.py
 - Edge AI optimization
 
 ---
+
+## Final Year project in in my 
+notebooks/fire_detection_v1.ipynb 
+
 
 #  Author
 
